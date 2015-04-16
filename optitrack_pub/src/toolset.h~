@@ -1,0 +1,78 @@
+#ifndef __SERIALRDM_H__
+#define __SERIALRDM_H__
+
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <string.h>
+#include <pthread.h>
+#include <termios.h>
+#include <ctype.h>
+#include <math.h>
+#include <time.h>
+#include <fstream>
+#include <stdarg.h>
+
+#include <sys/time.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#pragma warning( disable : 4996 )
+#define MAX_NAMELENGTH 256
+#define MULTICAST_ADDRESS "239.255.42.99"     		// IANA, local network
+#define PORT_DATA 1511                			// Default multicast group
+
+#define EXTERNALGPS_IPADDRESS "192.168.1.74"
+
+//#define ONBOARD_IPADDRESS "192.168.1.50"
+#define ONBOARD_IPADDRESS "192.168.1."
+// Socket compatible
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR -1
+#endif
+
+
+class ExternalGPS {
+public:
+    // Constructor / Destructor
+    ExternalGPS(void);
+    virtual ~ExternalGPS();
+    int quadID;
+    void set_values(int id, char myip[100], char serverip[100]);
+    float g_x,g_y,g_z,g_qx,g_qy,g_qz,g_qw;   
+
+    int init(void);
+    void loop(void);
+
+private:
+    
+    char szMyIPAddress[128];
+    char szServerIPAddress[128];   
+    int DataSocket;
+   
+    char  szData[20000];
+    int addr_len;
+    struct sockaddr_in TheirAddress;
+
+    // Analyse the data
+    void Unpack(char*,int);
+    
+};
+
+#endif

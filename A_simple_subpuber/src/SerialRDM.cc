@@ -1,0 +1,94 @@
+
+#include "SerialRDM.h"
+
+SerialRDM::SerialRDM()
+{
+
+}
+
+
+SerialRDM::~SerialRDM()
+{
+    close(fd);
+}
+
+void SerialRDM::set_values(char * path_temp)
+{
+    path = path_temp;
+}
+
+int SerialRDM::init()
+{
+    serialopen();
+    serialconfig();
+    return 1;
+}
+
+int SerialRDM::serialopen()
+{
+    int ret;
+
+    fd = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    fd_mavlink = fd;
+    if (fd < 0 && DebugMode){
+       printf("SerialComm error: cann't open port\n");
+       exit(-1);
+    }
+
+    ret = fcntl(fd, F_SETFL, O_RDWR);
+    if (ret < 0 && DebugMode){
+       printf("SerialComm error: fcntl\n");
+       exit(-1);
+    }
+
+    return (fd);
+}
+
+
+int SerialRDM::serialconfig()
+{
+    struct termios tp;
+    int ret;
+
+    ret = tcgetattr(fd, &tp);
+    if (ret < 0 && DebugMode)
+    printf("SerialComm error: tcgetattr\n");
+
+    cfmakeraw(&tp);
+    cfsetspeed(&tp, B115200);
+
+    ret = tcsetattr(fd, TCSANOW, &tp);
+    if (ret < 0 && DebugMode)
+    printf("SerialComm error: tcsetattr\n");
+
+    ret = tcflush(fd, TCIOFLUSH);
+    if (ret < 0 && DebugMode)
+    printf("SerialComm error: tcflush\n");
+
+    return ret;
+}
+
+
+void SerialRDM::serialsendf(const char* buf,uint16_t len)
+{
+    uint8_t buf_temp[len];
+
+    for (int i=0; i<len; i++){
+        buf_temp[i]=(uint8_t)buf[i];
+    }
+
+    write(fd,(const char*)buf_temp,len);
+}
+
+
+void SerialRDM::serialreceive(void* buff,size_t len)
+{
+    read(fd,buff,len);
+}
+
+
+void SerialRDM::serialclose(void)
+{
+    close(fd);
+}
+
